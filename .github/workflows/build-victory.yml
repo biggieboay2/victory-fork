@@ -20,12 +20,14 @@ jobs:
 
       - name: Install llvm-mingw 20261117
         run: |
-          mkdir -p $HOME/llvm-mingw
-          cd $HOME/llvm-mingw
-          curl -L --silent --fail \
-            -o llvm-mingw.tar.zst \
-            https://github.com/mstorsjo/llvm-mingw/releases/download/20261117/llvm-mingw-ucrt-x86_64.tar.zst
-          tar --use-compress-program=unzstd -xf llvm-mingw.tar.zst --strip-components=1
+          mkdir -p "$HOME/llvm-mingw"
+          cd "$HOME/llvm-mingw"
+          curl -L --fail \
+            -o llvm-mingw.tar.xz \
+            https://github.com/mstorsjo/llvm-mingw/releases/download/20261117/llvm-mingw-20261117-ucrt-ubuntu-22.04-x86_64.tar.xz
+          tar -xJf llvm-mingw.tar.xz --strip-components=1
+          echo "toolchain root: $HOME/llvm-mingw"
+          ls "$HOME/llvm-mingw/bin/x86_64-w64-mingw32-clang"
 
       - name: Build victory.exe
         env:
@@ -39,7 +41,7 @@ jobs:
 
       - name: Stage release DLLs alongside victory.exe
         run: |
-          cp $HOME/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll \
+          cp "$HOME/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll" \
              target/x86_64-pc-windows-gnullvm/diag/
 
       - name: Upload archive
