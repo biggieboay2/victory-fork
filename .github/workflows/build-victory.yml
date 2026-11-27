@@ -29,39 +29,27 @@ jobs:
           echo "toolchain root: $HOME/llvm-mingw"
           ls "$HOME/llvm-mingw/bin/x86_64-w64-mingw32-clang"
 
-      - name: Override project clippy lints for this build
-        run: |
-          mkdir -p .cargo
-          cat > .cargo/config.toml <<'EOF'
-          [lints.clippy]
-          double_comparisons = "allow"
-          neg_cmp_op_on_partial_ord = "allow"
-          EOF
-
-      - name: Build victory.exe
+      - name: Build victory.exe (release, diagnostics off)
         env:
           LLVM_MINGW_ROOT: $HOME/llvm-mingw
         run: |
           cargo build --locked \
             --target x86_64-pc-windows-gnullvm \
-            --profile diag --features diagnostics \
+            --release \
             -p victory
-          ls -lh target/x86_64-pc-windows-gnullvm/diag/victory.exe
+          ls -lh target/x86_64-pc-windows-gnullvm/release/victory.exe
 
       - name: Stage release DLLs alongside victory.exe
         run: |
+          mkdir -p target/x86_64-pc-windows-gnullvm/release
           cp "$HOME/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll" \
-             target/x86_64-pc-windows-gnullvm/diag/
-
-      - name: Cleanup override
-        if: always()
-        run: rm -rf .cargo
+             target/x86_64-pc-windows-gnullvm/release/
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
           name: victory-mac-binaries
           path: |
-            target/x86_64-pc-windows-gnullvm/diag/victory.exe
-            target/x86_64-pc-windows-gnullvm/diag/libunwind.dll
+            target/x86_64-pc-windows-gnullvm/release/victory.exe
+            target/x86_64-pc-windows-gnullvm/release/libunwind.dll
           if-no-files-found: error
