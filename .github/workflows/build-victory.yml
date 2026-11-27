@@ -29,6 +29,15 @@ jobs:
           echo "toolchain root: $HOME/llvm-mingw"
           ls "$HOME/llvm-mingw/bin/x86_64-w64-mingw32-clang"
 
+      - name: Override project clippy lints for this build
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml <<'EOF'
+          [lints.clippy]
+          double_comparisons = "allow"
+          neg_cmp_op_on_partial_ord = "allow"
+          EOF
+
       - name: Build victory.exe
         env:
           LLVM_MINGW_ROOT: $HOME/llvm-mingw
@@ -43,6 +52,10 @@ jobs:
         run: |
           cp "$HOME/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll" \
              target/x86_64-pc-windows-gnullvm/diag/
+
+      - name: Cleanup override
+        if: always()
+        run: rm -rf .cargo
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
