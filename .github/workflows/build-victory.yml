@@ -29,7 +29,18 @@ jobs:
           echo "toolchain root: $HOME/llvm-mingw"
           ls "$HOME/llvm-mingw/bin/x86_64-w64-mingw32-clang"
 
-      - name: Build victory.exe (release, diagnostics off)
+      - name: Allow list-of-lints on valu_tests (build-time patch)
+        run: |
+          F="crates/victory-shader/src/emit/valu_tests.rs"
+          sed -i.bak '1i\
+          #![allow(clippy::double_comparisons, clippy::neg_cmp_op_on_partial_ord)]
+          ' "$F"
+          echo "--- first 4 lines of patched file ---"
+          head -4 "$F"
+          echo "--- backup present: ---"
+          ls -lh "${F}.bak"
+
+      - name: Build victory.exe (release)
         env:
           LLVM_MINGW_ROOT: $HOME/llvm-mingw
         run: |
@@ -44,6 +55,12 @@ jobs:
           mkdir -p target/x86_64-pc-windows-gnullvm/release
           cp "$HOME/llvm-mingw/x86_64-w64-mingw32/bin/libunwind.dll" \
              target/x86_64-pc-windows-gnullvm/release/
+
+      - name: Restore patched source
+        if: always()
+        run: |
+          F="crates/victory-shader/src/emit/valu_tests.rs"
+          if [ -f "${F}.bak" ]; then mv "${F}.bak" "$F"; echo restored; else echo "backup missing, leaving file as-is"; fi
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
